@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+
+<!-- iPhone 真全屏必须开启的标志 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="viewport" 
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>iOS 全屏锁屏</title>
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: black;
+        touch-action: none; /* 禁止所有滑动 */
+        font-family: Arial, sans-serif;
+    }
+
+    /* 上传界面 */
+    #uploadArea {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: white;
+        font-size: 22px;
+    }
+
+    /* 锁屏背景 */
+    #lockScreen {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        background-size: cover;
+        background-position: center;
+    }
+
+    /* 解锁按钮 */
+    #unlockBtn {
+        position: absolute;
+        bottom: 40px;
+        padding: 18px 42px;
+        font-size: 26px;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        backdrop-filter: blur(4px);
+        cursor: pointer;
+    }
+</style>
+</head>
+
+<body>
+
+<div id="uploadArea">
+    <div>上传图片以锁定屏幕</div><br>
+    <input type="file" id="imgInput" accept="image/*">
+</div>
+
+<div id="lockScreen">
+    <button id="unlockBtn">解锁屏幕</button>
+</div>
+
+<script>
+    const imgInput = document.getElementById("imgInput");
+    const lockScreen = document.getElementById("lockScreen");
+    const uploadArea = document.getElementById("uploadArea");
+    const unlockBtn = document.getElementById("unlockBtn");
+
+    /* 彻底阻止手机滑动（包括回弹） */
+    document.body.addEventListener("touchmove", e => {
+        e.preventDefault();
+    }, { passive: false });
+
+    /* 上传后锁屏 */
+    imgInput.addEventListener("change", function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = e => {
+            lockScreen.style.backgroundImage = `url('${e.target.result}')`;
+            uploadArea.style.display = "none";
+            lockScreen.style.display = "flex";
+        };
+
+        reader.readAsDataURL(file);
+    });
+
+    /* 解锁 */
+    unlockBtn.addEventListener("click", () => {
+        lockScreen.style.display = "none";
+        uploadArea.style.display = "block";
+    });
+</script>
+
+</body>
+</html>
