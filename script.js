@@ -171,22 +171,31 @@ document.addEventListener('DOMContentLoaded', () => {
         kickDistortion = new Tone.Distortion(0.4).toDestination();
         kick.connect(kickDistortion);
 
-        // 2. Cowbell (The "Dudada" element)
-        cowbell = new Tone.MetalSynth({
-            frequency: 800,
+        // 2. Cowbell (Improved Phonk Style - Loud & punchy)
+        // Using FM Synth to create a bell-like metallic tone
+        cowbell = new Tone.FMSynth({
+            harmonicity: 3.01,
+            modulationIndex: 14,
+            oscillator: { type: "pulse", width: 0.2 },
             envelope: {
                 attack: 0.001,
-                decay: 0.1,
-                release: 0.01
+                decay: 0.3,
+                sustain: 0.1,
+                release: 0.1
             },
-            harmonicity: 5.1,
-            modulationIndex: 32,
-            resonance: 4000,
-            octaves: 1.5
+            modulation: { type: "square" },
+            modulationEnvelope: {
+                attack: 0.002,
+                decay: 0.2,
+                sustain: 0,
+                release: 0.2
+            }
         }).toDestination();
         
-        const cowbellDelay = new Tone.FeedbackDelay("8n", 0.3).toDestination();
-        cowbell.connect(cowbellDelay);
+        // Add a bit of reverb to space it out
+        const cowbellReverb = new Tone.Reverb(1.5).toDestination(); 
+        cowbell.connect(cowbellReverb);
+        cowbell.volume.value = 5; // Boost volume significantly
 
         // 3. Hi-Hats (Fast and crispy)
         highHat = new Tone.NoiseSynth({
