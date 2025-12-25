@@ -113,8 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let transportStarted = false;
 
     // Instruments
-    let kick, cowbell, highHat, bass;
-    let loopKick, loopCowbell, loopHats, loopBass;
+    let kick, cowbell, highHat, bass, synth;
+    let normalPart, climaxPart;
+    let kickDistortion;
 
     partyBtn.addEventListener('click', async () => {
         if (!isPlaying) {
@@ -130,23 +131,22 @@ document.addEventListener('DOMContentLoaded', () => {
         isPlaying = true;
 
         await Tone.start();
-        Tone.Transport.bpm.value = 135; // Phonk BPM
+        Tone.Transport.bpm.value = 145; // Faster BPM for Phonk
 
         if (!transportStarted) {
             setupInstruments();
-            setupLoops();
+            setupParts();
             transportStarted = true;
         }
 
         Tone.Transport.start();
-        
-        // Add visual pulsing effect to body
-        document.body.style.animation = "pulse 0.44s infinite alternate"; // Sync approx with 135 BPM
+        document.body.style.animation = "pulse 0.41s infinite alternate"; // Normal pulse
     }
 
     function stopParty() {
         partyBtn.textContent = "🎵 开启派对模式 (Phonk)";
         document.body.classList.remove('party-mode');
+        document.body.classList.remove('climax-mode'); // Remove climax class
         isPlaying = false;
         
         Tone.Transport.stop();
@@ -168,11 +168,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }).toDestination();
         
-        const kickDistortion = new Tone.Distortion(0.4).toDestination();
+        kickDistortion = new Tone.Distortion(0.4).toDestination();
         kick.connect(kickDistortion);
 
         // 2. Cowbell (The "Dudada" element)
-        // Using MetalSynth to simulate 808 cowbell
         cowbell = new Tone.MetalSynth({
             frequency: 800,
             envelope: {
@@ -199,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }).toDestination();
 
-        // 4. Heavy Bass (Reese bass style)
+        // 4. Heavy Bass
         bass = new Tone.MonoSynth({
             oscillator: { type: "sawtooth" },
             envelope: {
@@ -219,35 +218,110 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const bassDist = new Tone.Distortion(0.2).toDestination();
         bass.connect(bassDist);
+
+        // 5. Climax Synth (Screech)
+        synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "sawtooth" },
+            envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 1 }
+        }).toDestination();
+        const synthDist = new Tone.Chebyshev(50).toDestination(); // Heavy distortion
+        synth.connect(synthDist);
     }
 
-    function setupLoops() {
-        // Kick Pattern: Simple driving beat with some syncopation
-        loopKick = new Tone.Sequence((time, note) => {
-            kick.triggerAttackRelease(note, "8n", time);
-        }, ["C1", null, "C1", null, "C1", "C1", null, "C1"], "4n").start(0);
-
-        // Cowbell Melody ("Dudada" feel)
-        // High pitched, repetitive
-        const bellPattern = [
+    function setupParts() {
+        // --- Normal Section Patterns ---
+        const normalKickPattern = ["C1", null, "C1", null, "C1", "C1", null, "C1"];
+        const normalCowbellPattern = [
             "C5", "C5", null, "D#5", 
             "C5", null, "A#4", "C5",
             "C5", "C5", "C5", "D#5", 
             "G5", null, "D#5", "C5"
         ];
         
-        loopCowbell = new Tone.Sequence((time, note) => {
-            if (note) cowbell.triggerAttackRelease(note, "16n", time, 1.2); // Velocity high
-        }, bellPattern, "8n").start(0);
+        // --- Climax Section Patterns (Busier, more intense) ---
+        const climaxKickPattern = ["C1", "C1", "C1", "C1", "C1", "C1", "C1", "C1"]; // 4-on-floor + fills
+        const climaxCowbellPattern = [
+            "C5", "C5", "D#5", "C5", 
+            "F5", "D#5", "C5", "A#4",
+            "C5", "C5", "C6", "C6", // High octave scream
+            "G5", "F5", "D#5", "C5" 
+        ];
 
-        // Hi-Hats: Fast 16th notes with some rolls
-        loopHats = new Tone.Loop((time) => {
-            highHat.triggerAttackRelease("16n", time, 0.5);
-        }, "16n").start(0);
+        // Part 1: Normal Phonk Beat (4 measures)
+        normalPart = new Tone.Part((time, value) => {
+             // Beat
+             const step = value.step;
+             
+             // Kick
+             if (normalKickPattern[Math.floor(step/2)]) {
+                 if (step % 2 === 0) kick.triggerAttackRelease("C1", "8n", time);
+             }
 
-        // Bass Line: Following the root
-        loopBass = new Tone.Sequence((time, note) => {
-            if (note) bass.triggerAttackRelease(note, "2n", time);
-        }, ["C2", null, "G1", null], "1m").start(0);
+             // Cowbell
+             const note = normalCowbellPattern[step];
+             if (note) cowbell.triggerAttackRelease(note, "16n", time, 1.2);
+
+             // Hats (Every 16th)
+             highHat.triggerAttackRelease("16n", time, 0.4);
+
+             // Bass (Long notes)
+             if (step === 0) bass.triggerAttackRelease("C2", "1n", time);
+
+             // Visuals: reset to normal
+             if (step === 0) {
+                 document.body.classList.remove('climax-mode');
+                 kickDistortion.distortion = 0.4;
+             }
+
+        }, Array.from({length: 16}, (_, i) => ({step: i})));
+        
+        normalPart.loop = true;
+        normalPart.loopEnd = "1m";
+
+        // Part 2: Climax / Drop (High Energy)
+        climaxPart = new Tone.Part((time, value) => {
+            const step = value.step;
+
+            // Intense Kick
+            kick.triggerAttackRelease("C1", "8n", time);
+
+            // Intense Cowbell
+            const note = climaxCowbellPattern[step];
+            if (note) cowbell.triggerAttackRelease(note, "32n", time, 1.5);
+
+            // Hats (Rolling)
+            highHat.triggerAttackRelease("32n", time, 0.8);
+
+            // Bass (Sliding/Pumping)
+            if (step % 4 === 0) bass.triggerAttackRelease("C2", "8n", time);
+
+            // Visuals: Climax
+            if (step === 0) {
+                document.body.classList.add('climax-mode');
+                kickDistortion.distortion = 0.8; // Maximize distortion
+            }
+
+        }, Array.from({length: 16}, (_, i) => ({step: i})));
+
+        climaxPart.loop = true;
+        climaxPart.loopEnd = "1m";
+
+        // Scheduler: 4 bars Normal -> 4 bars Climax -> Repeat
+        Tone.Transport.scheduleRepeat((time) => {
+            // Stop all parts
+            normalPart.stop(time);
+            climaxPart.stop(time);
+
+            const measure = Math.floor(Tone.Transport.position.split(":")[0]);
+            
+            // Structure: 0-3 Normal, 4-7 Climax
+            const section = measure % 8;
+            
+            if (section < 4) {
+                normalPart.start(time);
+            } else {
+                climaxPart.start(time);
+            }
+        }, "1m");
     }
 });

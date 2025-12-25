@@ -16,6 +16,20 @@ body.party-mode {
     color: #fff;
 }
 
+/* CLIMAX MODE - More Intense */
+body.climax-mode {
+    background: #000;
+    animation: intenseShake 0.1s infinite !important;
+}
+
+@keyframes intenseShake {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(-2px, 2px) rotate(-1deg); }
+    50% { transform: translate(2px, -2px) rotate(1deg); }
+    75% { transform: translate(-2px, -2px) rotate(0deg); }
+    100% { transform: translate(2px, 2px) rotate(0deg); }
+}
+
 .container {
     width: 100%;
     max-width: 600px;
@@ -32,6 +46,11 @@ body.party-mode .container {
     box-shadow: 0 0 30px #ff00de, 0 0 60px #00ffea;
 }
 
+body.climax-mode .container {
+    box-shadow: 0 0 50px #ff0000, 0 0 80px #ffff00; /* Red/Yellow for danger/climax */
+    border: 2px solid white;
+}
+
 /* Header */
 header {
     background: #4a90e2;
@@ -44,6 +63,11 @@ header {
 body.party-mode header {
     background: linear-gradient(45deg, #ff00de, #00ffea);
     animation: gradientShift 2s infinite alternate;
+}
+
+body.climax-mode header {
+    background: linear-gradient(45deg, #ff0000, #ffff00);
+    animation: gradientShift 0.1s infinite alternate; /* Super fast flash */
 }
 
 @keyframes gradientShift {
@@ -84,6 +108,12 @@ body.party-mode .party-btn {
     color: #00ffea;
     border-color: #00ffea;
     box-shadow: 0 0 10px #00ffea;
+}
+
+body.climax-mode .party-btn {
+    color: #ff0000;
+    border-color: #ff0000;
+    transform: scale(1.1);
 }
 
 /* Input Area */
@@ -215,6 +245,17 @@ body.party-mode .entry {
 
 body.party-mode .entry:nth-child(even) {
     border-left: 3px solid #ff00de;
+}
+
+body.climax-mode .entry {
+    border-left: 3px solid #ffff00;
+    animation: shakeEntry 0.5s infinite;
+}
+
+@keyframes shakeEntry {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
 }
 
 @keyframes fadeIn {
