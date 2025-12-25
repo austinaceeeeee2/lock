@@ -131,16 +131,27 @@ document.addEventListener('DOMContentLoaded', () => {
         isPlaying = true;
 
         await Tone.start();
-        Tone.Transport.bpm.value = 145; // Faster BPM for Phonk
+        Tone.Transport.bpm.value = 145; 
 
-        if (!transportStarted) {
-            setupInstruments();
-            setupParts();
-            transportStarted = true;
+        // Always recreate instruments to ensure audio context is active
+        if (transportStarted) {
+             Tone.Transport.stop();
+             Tone.Transport.cancel();
+             normalPart.dispose();
+             climaxPart.dispose();
+             kick.dispose();
+             cowbell.dispose();
+             highHat.dispose();
+             bass.dispose();
+             synth.dispose();
         }
+        
+        setupInstruments();
+        setupParts();
+        transportStarted = true;
 
         Tone.Transport.start();
-        document.body.style.animation = "pulse 0.41s infinite alternate"; // Normal pulse
+        document.body.style.animation = "pulse 0.41s infinite alternate"; 
     }
 
     function stopParty() {
